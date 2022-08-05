@@ -4,7 +4,7 @@ from random import randint
 import pygame as pg
 
 FULLSCREEN = False
-ANTS = 80
+ANTS = 200
 WIDTH = 1240
 HEIGHT = 1000
 FPS = 60

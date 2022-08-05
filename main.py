@@ -2,9 +2,6 @@ from config import *
 from ant import Ant
 
 
-
-
-
 def main():
     pg.init()
     pg.display.set_caption("Ants")

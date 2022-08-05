@@ -26,9 +26,9 @@ class Ant(pg.sprite.Sprite):
         mid_result = left_result = right_result = (0, 0, 0)
         random_angle = randint(0, 360)
         acceleration = pg.Vector2(0, 0)
-        wander_str = 0.15
+        wander_strength = 0.15
         max_speed = 12
-        steer_str = 3
+        steer_strength = 3
 
         if self.position.distance_to(self.last_pheromone) > 24:
             pheromones.add(Trail(self.position, 1))
@@ -41,51 +41,50 @@ class Ant(pg.sprite.Sprite):
         right_sensor_1 = self.vint(self.position + pg.Vector2(18, 14).rotate(self.angle))
         right_sensor_2 = self.vint(self.position + pg.Vector2(16, 21).rotate(self.angle))
 
+        if self.draw_surf.get_rect().collidepoint(mid_sensor_left) and self.draw_surf.get_rect().collidepoint(mid_sensor_right):
+            ms_rL = self.draw_surf.get_at(mid_sensor_left)[:3]
+            ms_rR = self.draw_surf.get_at(mid_sensor_right)[:3]
+            mid_result = (max(ms_rL[0], ms_rR[0]), max(ms_rL[1], ms_rR[1]), max(ms_rL[2], ms_rR[2]))
 
-        # if self.drawSurf.get_rect().collidepoint(mid_sensL) and self.drawSurf.get_rect().collidepoint(mid_sensR):
-        #     ms_rL = self.drawSurf.get_at(mid_sensL)[:3]
-        #     ms_rR = self.drawSurf.get_at(mid_sensR)[:3]
-        #     mid_result = (max(ms_rL[0], ms_rR[0]), max(ms_rL[1], ms_rR[1]), max(ms_rL[2], ms_rR[2]))
-        #
-        # if self.drawSurf.get_rect().collidepoint(left_sensr1) and self.drawSurf.get_rect().collidepoint(left_sensr2):
-        #     ls_r1 = self.drawSurf.get_at(left_sensr1)[:3]
-        #     ls_r2 = self.drawSurf.get_at(left_sensr2)[:3]
-        #     left_result = (max(ls_r1[0], ls_r2[0]), max(ls_r1[1], ls_r2[1]), max(ls_r1[2], ls_r2[2]))
-        #
-        # if self.drawSurf.get_rect().collidepoint(right_sensr1) and self.drawSurf.get_rect().collidepoint(right_sensr2):
-        #     rs_r1 = self.drawSurf.get_at(right_sensr1)[:3]
-        #     rs_r2 = self.drawSurf.get_at(right_sensr2)[:3]
-        #     right_result = (max(rs_r1[0], rs_r2[0]), max(rs_r1[1], rs_r2[1]), max(rs_r1[2], rs_r2[2]))
-        #
-        # if mid_result[2] > max(left_result[2], right_result[2]) and mid_result[:2] == (0,0):
-        #     self.desireDir = pg.Vector2(1,0).rotate(self.ang).normalize()
-        #     wandrStr = 0
-        # elif left_result[2] > right_result[2] and left_result[:2] == (0,0):
-        #     self.desireDir = pg.Vector2(1,-2).rotate(self.ang).normalize() #left (0,-1)
-        #     wandrStr = 0
-        # elif right_result[2] > left_result[2] and right_result[:2] == (0,0):
-        #     self.desireDir = pg.Vector2(1,2).rotate(self.ang).normalize() #right (0, 1)
-        #     wandrStr = 0
-        #
-        # # Avoid edges
-        # if not self.drawSurf.get_rect().collidepoint(left_sensr2) and self.drawSurf.get_rect().collidepoint(right_sensr2):
-        #     self.desireDir += pg.Vector2(0,1).rotate(self.ang)
-        #     wandrStr = 0
-        #     steerStr = 4
-        # elif not self.drawSurf.get_rect().collidepoint(right_sensr2) and self.drawSurf.get_rect().collidepoint(left_sensr2):
-        #     self.desireDir += pg.Vector2(0,-1).rotate(self.ang)
-        #     wandrStr = 0
-        #     steerStr = 4
-        # elif not self.drawSurf.get_rect().collidepoint(self.vint(self.pos + pg.Vector2(21, 0).rotate(self.ang))):
-        #     self.desireDir += pg.Vector2(-1,0).rotate(self.ang)
-        #     wandrStr = 0
-        #     steerStr = 5
+        if self.draw_surf.get_rect().collidepoint(left_sensor_1) and self.draw_surf.get_rect().collidepoint(left_sensor_2):
+            ls_r1 = self.draw_surf.get_at(left_sensor_1)[:3]
+            ls_r2 = self.draw_surf.get_at(left_sensor_2)[:3]
+            left_result = (max(ls_r1[0], ls_r2[0]), max(ls_r1[1], ls_r2[1]), max(ls_r1[2], ls_r2[2]))
+
+        if self.draw_surf.get_rect().collidepoint(right_sensor_1) and self.draw_surf.get_rect().collidepoint(right_sensor_2):
+            rs_r1 = self.draw_surf.get_at(right_sensor_1)[:3]
+            rs_r2 = self.draw_surf.get_at(right_sensor_2)[:3]
+            right_result = (max(rs_r1[0], rs_r2[0]), max(rs_r1[1], rs_r2[1]), max(rs_r1[2], rs_r2[2]))
+
+        if mid_result[2] > max(left_result[2], right_result[2]) and mid_result[:2] == (0,0):
+            self.desire_direction = pg.Vector2(1,0).rotate(self.angle).normalize()
+            wander_strength = 0
+        elif left_result[2] > right_result[2] and left_result[:2] == (0,0):
+            self.desire_direction = pg.Vector2(1,-2).rotate(self.angle).normalize() #left (0,-1)
+            wander_strength = 0
+        elif right_result[2] > left_result[2] and right_result[:2] == (0,0):
+            self.desire_direction = pg.Vector2(1,2).rotate(self.angle).normalize() #right (0, 1)
+            wander_strength = 0
+
+        # Avoid edges
+        if not self.draw_surf.get_rect().collidepoint(left_sensor_2) and self.draw_surf.get_rect().collidepoint(right_sensor_2):
+            self.desire_direction += pg.Vector2(0,1).rotate(self.angle)
+            wander_strength = 0
+            steer_strength = 4
+        elif not self.draw_surf.get_rect().collidepoint(right_sensor_2) and self.draw_surf.get_rect().collidepoint(left_sensor_2):
+            self.desire_direction += pg.Vector2(0,-1).rotate(self.angle)
+            wander_strength = 0
+            steer_strength = 4
+        elif not self.draw_surf.get_rect().collidepoint(self.vint(self.position + pg.Vector2(21, 0).rotate(self.angle))):
+            self.desire_direction += pg.Vector2(-1,0).rotate(self.angle)
+            wander_strength = 0
+            steer_strength = 5
 
         random_direction = pg.Vector2(cos(radians(random_angle)), sin(radians(random_angle)))
-        self.desire_direction = pg.Vector2(self.desire_direction + random_direction * wander_str).normalize()
+        self.desire_direction = pg.Vector2(self.desire_direction + random_direction * wander_strength).normalize()
         dz_vel = self.desire_direction * max_speed  # Rename this
-        dz_str_frc = (dz_vel - self.velocity) * steer_str  # Rename this
-        acceleration = dz_str_frc if pg.Vector2(dz_str_frc).magnitude() <= steer_str else pg.Vector2(dz_str_frc.normalize() * steer_str)
+        dz_str_frc = (dz_vel - self.velocity) * steer_strength  # Rename this
+        acceleration = dz_str_frc if pg.Vector2(dz_str_frc).magnitude() <= steer_strength else pg.Vector2(dz_str_frc.normalize() * steer_strength)
         velo = self.velocity + acceleration * delta_time  # Rename this
         self.velocity = velo if pg.Vector2(velo).magnitude() <= max_speed else pg.Vector2(velo.normalize() * max_speed)
         self.position += self.velocity * delta_time
@@ -115,7 +114,10 @@ class Trail(pg.sprite.Sprite):
             return self.kill()
         trail_strength = self.strength / 500
         self.image.fill(0)
-        if self.type == 1 : pg.draw.circle(self.image, [0, 0, 90 * trail_strength + 10], [4, 4], 4)
-        if self.type == 2 : pg.draw.circle(self.image, [0, 90 * trail_strength + 10, 0], [4, 4], 4)
+        if self.type == 1:
+            pg.draw.circle(self.image, [0, 0, 90 * trail_strength + 10], [4, 4], 4)
+
+        if self.type == 2:
+            pg.draw.circle(self.image, [0, 90 * trail_strength + 10, 0], [4, 4], 4)
 
 
