@@ -43,19 +43,25 @@ class Ant(pg.sprite.Sprite):
         right_sensor_2 = self.vint(self.position + pg.Vector2(16, 21).rotate(self.angle))
 
         if self.draw_surf.get_rect().collidepoint(mid_sensor_left) and self.draw_surf.get_rect().collidepoint(mid_sensor_right):
-            ms_rL = self.draw_surf.get_at(mid_sensor_left)[:3]
-            ms_rR = self.draw_surf.get_at(mid_sensor_right)[:3]
-            mid_result = (max(ms_rL[0], ms_rR[0]), max(ms_rL[1], ms_rR[1]), max(ms_rL[2], ms_rR[2]))
+            mid_sensor_left_right = self.draw_surf.get_at(mid_sensor_left)[:3]  # Get pixel at side
+            mid_sensor_right_right = self.draw_surf.get_at(mid_sensor_right)[:3]
+            mid_result = (max(mid_sensor_left_right[0], mid_sensor_right_right[0]),
+                          max(mid_sensor_left_right[1], mid_sensor_right_right[1]),
+                          max(mid_sensor_left_right[2], mid_sensor_right_right[2]))
 
         if self.draw_surf.get_rect().collidepoint(left_sensor_1) and self.draw_surf.get_rect().collidepoint(left_sensor_2):
-            ls_r1 = self.draw_surf.get_at(left_sensor_1)[:3]
-            ls_r2 = self.draw_surf.get_at(left_sensor_2)[:3]
-            left_result = (max(ls_r1[0], ls_r2[0]), max(ls_r1[1], ls_r2[1]), max(ls_r1[2], ls_r2[2]))
+            left_sensor_right_1 = self.draw_surf.get_at(left_sensor_1)[:3]
+            left_sensor_right_2 = self.draw_surf.get_at(left_sensor_2)[:3]
+            left_result = (max(left_sensor_right_1[0], left_sensor_right_2[0]),
+                           max(left_sensor_right_1[1], left_sensor_right_2[1]),
+                           max(left_sensor_right_1[2], left_sensor_right_2[2]))
 
         if self.draw_surf.get_rect().collidepoint(right_sensor_1) and self.draw_surf.get_rect().collidepoint(right_sensor_2):
-            rs_r1 = self.draw_surf.get_at(right_sensor_1)[:3]
-            rs_r2 = self.draw_surf.get_at(right_sensor_2)[:3]
-            right_result = (max(rs_r1[0], rs_r2[0]), max(rs_r1[1], rs_r2[1]), max(rs_r1[2], rs_r2[2]))
+            right_sensor_right_1 = self.draw_surf.get_at(right_sensor_1)[:3]
+            right_sensor_right_2 = self.draw_surf.get_at(right_sensor_2)[:3]
+            right_result = (max(right_sensor_right_1[0], right_sensor_right_2[0]),
+                            max(right_sensor_right_1[1], right_sensor_right_2[1]),
+                            max(right_sensor_right_1[2], right_sensor_right_2[2]))
 
         if mid_result[2] > max(left_result[2], right_result[2]) and mid_result[:2] == (0, 0):
             self.desire_direction = pg.Vector2(1, 0).rotate(self.angle).normalize()
