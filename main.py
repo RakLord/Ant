@@ -14,13 +14,18 @@ def main():
         screen = pg.display.set_mode((WIDTH, HEIGHT), pg.RESIZABLE)
 
     cur_w, cur_h = screen.get_size()
-    home = (cur_w / 2, cur_h / 2)
+    # home = (cur_w / 2, cur_h / 2)
+    home = (20, 20)
+    home2 = (cur_w - 20, cur_h - 20)
 
     ants = pg.sprite.Group()
+    ants2 = pg.sprite.Group()
+
     pheromones = pg.sprite.Group()
 
     for n in range(ANTS):
         ants.add(Ant(screen, home))
+        ants2.add(Ant(screen, home2, 2))
 
     clock = pg.time.Clock()
     fps_checker = 0
@@ -35,12 +40,14 @@ def main():
 
         pheromones.update(delta_time)
         ants.update(delta_time, pheromones=pheromones)
+        ants2.update(delta_time, pheromones=pheromones)
 
         screen.fill(0)
 
         pheromones.draw(screen)
 
         ants.draw(screen)
+        ants2.draw(screen)
 
         pg.display.update()
 

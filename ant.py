@@ -2,13 +2,14 @@ from config import *
 
 
 class Ant(pg.sprite.Sprite):
-    def __init__(self, draw_surf, home):
+    def __init__(self, draw_surf, home, pher_type=1):
         super().__init__()
         self.draw_surf = draw_surf
         self.home = home
         self.image = pg.Surface((12, 21)).convert()
         self.image.set_colorkey(0)
         color_brown = (80, 42, 42)
+        self.pher_type = pher_type
 
         pg.draw.ellipse(self.image, color_brown, [4, 6, 4, 9])
 
@@ -31,7 +32,7 @@ class Ant(pg.sprite.Sprite):
         steer_strength = 3
 
         if self.position.distance_to(self.last_pheromone) > 24:
-            pheromones.add(Trail(self.position, 1))
+            pheromones.add(Trail(self.position, self.pher_type))
             self.last_pheromone = pg.Vector2(self.rect.center)
 
         mid_sensor_left = self.vint(self.position + pg.Vector2(21, -3).rotate(self.angle))
@@ -56,32 +57,39 @@ class Ant(pg.sprite.Sprite):
             rs_r2 = self.draw_surf.get_at(right_sensor_2)[:3]
             right_result = (max(rs_r1[0], rs_r2[0]), max(rs_r1[1], rs_r2[1]), max(rs_r1[2], rs_r2[2]))
 
-        if mid_result[2] > max(left_result[2], right_result[2]) and mid_result[:2] == (0,0):
-            self.desire_direction = pg.Vector2(1,0).rotate(self.angle).normalize()
+        if mid_result[2] > max(left_result[2], right_result[2]) and mid_result[:2] == (0, 0):
+            self.desire_direction = pg.Vector2(1, 0).rotate(self.angle).normalize()
             wander_strength = 0
+
         elif left_result[2] > right_result[2] and left_result[:2] == (0,0):
-            self.desire_direction = pg.Vector2(1,-2).rotate(self.angle).normalize() #left (0,-1)
+            self.desire_direction = pg.Vector2(1, -2).rotate(self.angle).normalize()  #left (0,-1)
             wander_strength = 0
+
         elif right_result[2] > left_result[2] and right_result[:2] == (0,0):
-            self.desire_direction = pg.Vector2(1,2).rotate(self.angle).normalize() #right (0, 1)
+            self.desire_direction = pg.Vector2(1, 2).rotate(self.angle).normalize()  #right (0, 1)
             wander_strength = 0
 
         # Avoid edges
         if not self.draw_surf.get_rect().collidepoint(left_sensor_2) and self.draw_surf.get_rect().collidepoint(right_sensor_2):
-            self.desire_direction += pg.Vector2(0,1).rotate(self.angle)
+            self.desire_direction += pg.Vector2(0, 1).rotate(self.angle)
             wander_strength = 0
             steer_strength = 4
+
         elif not self.draw_surf.get_rect().collidepoint(right_sensor_2) and self.draw_surf.get_rect().collidepoint(left_sensor_2):
-            self.desire_direction += pg.Vector2(0,-1).rotate(self.angle)
+            self.desire_direction += pg.Vector2(0, -1).rotate(self.angle)
             wander_strength = 0
             steer_strength = 4
+
         elif not self.draw_surf.get_rect().collidepoint(self.vint(self.position + pg.Vector2(21, 0).rotate(self.angle))):
-            self.desire_direction += pg.Vector2(-1,0).rotate(self.angle)
+            self.desire_direction += pg.Vector2(-1, 0).rotate(self.angle)
             wander_strength = 0
             steer_strength = 5
 
         random_direction = pg.Vector2(cos(radians(random_angle)), sin(radians(random_angle)))
-        self.desire_direction = pg.Vector2(self.desire_direction + random_direction * wander_strength).normalize()
+
+        if self.desire_direction != (0, 0) and wander_strength != 0:
+            self.desire_direction = pg.Vector2(self.desire_direction + random_direction * wander_strength).normalize()
+
         dz_vel = self.desire_direction * max_speed  # Rename this
         dz_str_frc = (dz_vel - self.velocity) * steer_strength  # Rename this
         acceleration = dz_str_frc if pg.Vector2(dz_str_frc).magnitude() <= steer_strength else pg.Vector2(dz_str_frc.normalize() * steer_strength)
