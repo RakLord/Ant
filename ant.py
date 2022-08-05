@@ -24,7 +24,7 @@ class Ant(pg.sprite.Sprite):
     def update(self, delta_time, **kwargs):
         pheromones = kwargs["pheromones"]
         cur_w, cur_h = self.draw_surf.get_size()
-        mid_result = left_result = right_result = (0, 0, 0)
+        mid_sensor_result = left_sensor_result = right_sensor_result = (0, 0, 0)
         random_angle = randint(0, 360)
         acceleration = pg.Vector2(0, 0)
         wander_strength = 0.15
@@ -42,37 +42,41 @@ class Ant(pg.sprite.Sprite):
         right_sensor_1 = self.vint(self.position + pg.Vector2(18, 14).rotate(self.angle))
         right_sensor_2 = self.vint(self.position + pg.Vector2(16, 21).rotate(self.angle))
 
+        # Checks if the sensor points are inside a rect and if they are grab the pixel values to the l/r of each sensor
+        # and check the max value of either the left/right sensor for each R G B value
         if self.draw_surf.get_rect().collidepoint(mid_sensor_left) and self.draw_surf.get_rect().collidepoint(mid_sensor_right):
-            mid_sensor_left_right = self.draw_surf.get_at(mid_sensor_left)[:3]  # Get pixel at side
+            mid_sensor_left_right = self.draw_surf.get_at(mid_sensor_left)[:3]
             mid_sensor_right_right = self.draw_surf.get_at(mid_sensor_right)[:3]
-            mid_result = (max(mid_sensor_left_right[0], mid_sensor_right_right[0]),
-                          max(mid_sensor_left_right[1], mid_sensor_right_right[1]),
-                          max(mid_sensor_left_right[2], mid_sensor_right_right[2]))
+            mid_sensor_result = (max(mid_sensor_left_right[0], mid_sensor_right_right[0]),
+                                 max(mid_sensor_left_right[1], mid_sensor_right_right[1]),
+                                 max(mid_sensor_left_right[2], mid_sensor_right_right[2]))
 
         if self.draw_surf.get_rect().collidepoint(left_sensor_1) and self.draw_surf.get_rect().collidepoint(left_sensor_2):
             left_sensor_right_1 = self.draw_surf.get_at(left_sensor_1)[:3]
             left_sensor_right_2 = self.draw_surf.get_at(left_sensor_2)[:3]
-            left_result = (max(left_sensor_right_1[0], left_sensor_right_2[0]),
-                           max(left_sensor_right_1[1], left_sensor_right_2[1]),
-                           max(left_sensor_right_1[2], left_sensor_right_2[2]))
+            left_sensor_result = (max(left_sensor_right_1[0], left_sensor_right_2[0]),
+                                  max(left_sensor_right_1[1], left_sensor_right_2[1]),
+                                  max(left_sensor_right_1[2], left_sensor_right_2[2]))
 
         if self.draw_surf.get_rect().collidepoint(right_sensor_1) and self.draw_surf.get_rect().collidepoint(right_sensor_2):
             right_sensor_right_1 = self.draw_surf.get_at(right_sensor_1)[:3]
             right_sensor_right_2 = self.draw_surf.get_at(right_sensor_2)[:3]
-            right_result = (max(right_sensor_right_1[0], right_sensor_right_2[0]),
-                            max(right_sensor_right_1[1], right_sensor_right_2[1]),
-                            max(right_sensor_right_1[2], right_sensor_right_2[2]))
+            right_sensor_result = (max(right_sensor_right_1[0], right_sensor_right_2[0]),
+                                   max(right_sensor_right_1[1], right_sensor_right_2[1]),
+                                   max(right_sensor_right_1[2], right_sensor_right_2[2]))
 
-        if mid_result[2] > max(left_result[2], right_result[2]) and mid_result[:2] == (0, 0):
-            self.desire_direction = pg.Vector2(1, 0).rotate(self.angle).normalize()
+        #  If the max sensor value (index 2 blue pixel) is gt the max value of either the left sensor,
+        #  right. And the mid sensor green / blue is == 0 Then set the desired direction to forward. And set wander to 0
+        if mid_sensor_result[2] > max(left_sensor_result[2], right_sensor_result[2]) and mid_sensor_result[:2] == (0, 0):
+            self.desire_direction = pg.Vector2(1, 0).rotate(self.angle).normalize()  # Set dir to forwards
             wander_strength = 0
 
-        elif left_result[2] > right_result[2] and left_result[:2] == (0,0):
-            self.desire_direction = pg.Vector2(1, -2).rotate(self.angle).normalize()  #left (0,-1)
+        elif left_sensor_result[2] > right_sensor_result[2] and left_sensor_result[:2] == (0, 0):
+            self.desire_direction = pg.Vector2(1, -2).rotate(self.angle).normalize()  # Set dir to left (0,-1)
             wander_strength = 0
 
-        elif right_result[2] > left_result[2] and right_result[:2] == (0,0):
-            self.desire_direction = pg.Vector2(1, 2).rotate(self.angle).normalize()  #right (0, 1)
+        elif right_sensor_result[2] > left_sensor_result[2] and right_sensor_result[:2] == (0, 0):
+            self.desire_direction = pg.Vector2(1, 2).rotate(self.angle).normalize()  # Set dir to right (0, 1)
             wander_strength = 0
 
         # Avoid edges
@@ -96,11 +100,12 @@ class Ant(pg.sprite.Sprite):
         if self.desire_direction != (0, 0) and wander_strength != 0:
             self.desire_direction = pg.Vector2(self.desire_direction + random_direction * wander_strength).normalize()
 
-        dz_vel = self.desire_direction * max_speed  # Rename this
-        dz_str_frc = (dz_vel - self.velocity) * steer_strength  # Rename this
-        acceleration = dz_str_frc if pg.Vector2(dz_str_frc).magnitude() <= steer_strength else pg.Vector2(dz_str_frc.normalize() * steer_strength)
-        velo = self.velocity + acceleration * delta_time  # Rename this
-        self.velocity = velo if pg.Vector2(velo).magnitude() <= max_speed else pg.Vector2(velo.normalize() * max_speed)
+        final_desire_direction = self.desire_direction * max_speed
+        desire_direction_with_steer = (final_desire_direction - self.velocity) * steer_strength
+        acceleration = desire_direction_with_steer if pg.Vector2(desire_direction_with_steer).magnitude() <= steer_strength else pg.Vector2(desire_direction_with_steer.normalize() * steer_strength)
+        final_velocity = self.velocity + acceleration * delta_time
+
+        self.velocity = final_velocity if pg.Vector2(final_velocity).magnitude() <= max_speed else pg.Vector2(final_velocity.normalize() * max_speed)
         self.position += self.velocity * delta_time
         self.angle = degrees(atan2(self.velocity[1], self.velocity[0]))
         self.image = pg.transform.rotate(self.original_image, -self.angle)
